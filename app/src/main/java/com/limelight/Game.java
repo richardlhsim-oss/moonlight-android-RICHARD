@@ -81,6 +81,7 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
@@ -94,6 +95,7 @@ import java.lang.reflect.Method;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
 import java.util.Locale;
 
 
@@ -119,7 +121,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private static final int STYLUS_UP_DEAD_ZONE_RADIUS = 50;
 
     private static final int THREE_FINGER_TAP_THRESHOLD = 300;
-    private static final int SCROLL_STRIP_SPEED_FACTOR = 3;
+    private static final int SCROLL_STRIP_SPEED_FACTOR = 6;
     private static final int MODIFIER_BAR_HEIGHT_DP = 52;
     private static final int FUNCTION_PAD_HEIGHT_DP = 300;
 
@@ -176,6 +178,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private View mouseButtonBar;
     private View scrollStrip;
     private float lastScrollStripY;
+    private final HashMap<View, float[]> overlayOffsets = new HashMap<>();
+    private boolean overlayEditMode = false;
+    private boolean overlayDragMoved;
+    private float overlayDragStartRawX, overlayDragStartRawY;
+    private float overlayDragStartX, overlayDragStartY;
     private View modifierBar;
     private boolean statsOverlayVisible = false;
     private boolean privacyScreenRequested = false;
@@ -342,6 +349,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             prefConfig.enablePip = true;
 
             quickMenuHandle.setVisibility(View.VISIBLE);
+            if (!prefConfig.showHandleKeyboard) {
+                findViewById(R.id.quickMenuHandleKeyboard).setVisibility(View.GONE);
+            }
             findViewById(R.id.quickMenuHandleChevron).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -432,20 +442,27 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     Toast.makeText(Game.this, R.string.privacy_screen_sent, Toast.LENGTH_SHORT).show();
                 }
             });
+            findViewById(R.id.quickMenuMoveOverlaysButton).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    setOverlayEditMode(true);
+                }
+            });
             updateCursorModeButton();
 
             mouseButtonBar = findViewById(R.id.mouseButtonBar);
-            mouseButtonBar.setVisibility(View.VISIBLE);
             findViewById(R.id.mouseLeftButton).setOnTouchListener(
                     createMouseButtonTouchListener(MouseButtonPacket.BUTTON_LEFT));
             findViewById(R.id.mouseRightButton).setOnTouchListener(
                     createMouseButtonTouchListener(MouseButtonPacket.BUTTON_RIGHT));
 
             scrollStrip = findViewById(R.id.scrollStrip);
-            scrollStrip.setVisibility(View.VISIBLE);
             scrollStrip.setOnTouchListener(new OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
+                    if (overlayEditMode) {
+                        return handleOverlayDrag(scrollStrip, event);
+                    }
                     switch (event.getActionMasked()) {
                         case MotionEvent.ACTION_DOWN:
                             lastScrollStripY = event.getY();
@@ -470,6 +487,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             });
 
             setupModifierBar();
+            setupMovableOverlays();
+            showDesktopOverlays();
 
             // Restore the remembered zoom and pan for this host once the
             // stream view has been laid out
@@ -849,8 +868,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                 if (prefConfig.enablePanZoom) {
                     quickMenuHandle.setVisibility(View.VISIBLE);
-                    mouseButtonBar.setVisibility(View.VISIBLE);
-                    scrollStrip.setVisibility(View.VISIBLE);
+                    showDesktopOverlays();
 
                     // Restore the zoom and pan from before PiP
                     if (panZoomHandler != null && prePipScale > 1.01f && prePipCenter != null) {
@@ -1770,6 +1788,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                if (overlayEditMode) {
+                    return handleOverlayDrag(mouseButtonBar, event);
+                }
                 switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
                         if (latched) {
@@ -1807,6 +1828,125 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 }
             }
         };
+    }
+
+    private void showDesktopOverlays() {
+        mouseButtonBar.setVisibility(prefConfig.showMouseButtons ? View.VISIBLE : View.GONE);
+        scrollStrip.setVisibility(prefConfig.showScrollStrip ? View.VISIBLE : View.GONE);
+    }
+
+    private void setupMovableOverlays() {
+        SharedPreferences layout = getSharedPreferences("desktop_overlay_layout", MODE_PRIVATE);
+        for (View overlay : new View[] { mouseButtonBar, scrollStrip, quickMenuHandle }) {
+            String key = getResources().getResourceEntryName(overlay.getId());
+            overlayOffsets.put(overlay, new float[] {
+                    layout.getFloat(key + "_x", 0), layout.getFloat(key + "_y", 0) });
+        }
+
+        // The handle's chevron and keyboard buttons consume touches, so they
+        // forward drags to the handle while editing
+        OnTouchListener handleDragListener = new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return overlayEditMode && handleOverlayDrag(quickMenuHandle, event);
+            }
+        };
+        findViewById(R.id.quickMenuHandleChevron).setOnTouchListener(handleDragListener);
+        findViewById(R.id.quickMenuHandleKeyboard).setOnTouchListener(handleDragListener);
+
+        // Offsets are re-clamped whenever the layout changes (rotation,
+        // keyboard insets, visibility) so overlays never end up off screen
+        View.OnLayoutChangeListener reapply = new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                applyOverlayOffsets();
+            }
+        };
+        for (View overlay : overlayOffsets.keySet()) {
+            overlay.addOnLayoutChangeListener(reapply);
+        }
+        quickMenu.addOnLayoutChangeListener(reapply);
+
+        setOverlayAlpha(prefConfig.desktopOverlayOpacity / 100f);
+    }
+
+    private void setOverlayAlpha(float alpha) {
+        for (View overlay : overlayOffsets.keySet()) {
+            overlay.setAlpha(alpha);
+        }
+    }
+
+    private void applyOverlayOffsets() {
+        for (View overlay : overlayOffsets.keySet()) {
+            float[] offset = overlayOffsets.get(overlay);
+            applyClampedTranslation(overlay, offset[0], offset[1]);
+        }
+        // The expanded quick menu opens at the handle's height
+        applyClampedTranslation(quickMenu, 0, overlayOffsets.get(quickMenuHandle)[1]);
+    }
+
+    private static void applyClampedTranslation(View v, float x, float y) {
+        View parent = (View) v.getParent();
+        v.setTranslationX(Math.max(-v.getLeft(),
+                Math.min(x, parent.getWidth() - parent.getPaddingRight() - v.getRight())));
+        v.setTranslationY(Math.max(parent.getPaddingTop() - v.getTop(),
+                Math.min(y, parent.getHeight() - parent.getPaddingBottom() - v.getBottom())));
+    }
+
+    private boolean handleOverlayDrag(View overlay, MotionEvent event) {
+        float[] offset = overlayOffsets.get(overlay);
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                overlayDragStartRawX = event.getRawX();
+                overlayDragStartRawY = event.getRawY();
+                // Start from the clamped position so dragging responds immediately
+                overlayDragStartX = offset[0] = overlay.getTranslationX();
+                overlayDragStartY = offset[1] = overlay.getTranslationY();
+                overlayDragMoved = false;
+                return true;
+            case MotionEvent.ACTION_MOVE:
+                float dx = event.getRawX() - overlayDragStartRawX;
+                float dy = event.getRawY() - overlayDragStartRawY;
+                if (!overlayDragMoved && Math.hypot(dx, dy) < ViewConfiguration.get(this).getScaledTouchSlop()) {
+                    return true;
+                }
+                overlayDragMoved = true;
+                offset[0] = overlayDragStartX + dx;
+                offset[1] = overlayDragStartY + dy;
+                applyOverlayOffsets();
+                return true;
+            case MotionEvent.ACTION_UP:
+                if (!overlayDragMoved) {
+                    setOverlayEditMode(false);
+                }
+                return true;
+            case MotionEvent.ACTION_CANCEL:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void setOverlayEditMode(boolean active) {
+        overlayEditMode = active;
+        if (active) {
+            quickMenu.setVisibility(View.GONE);
+            quickMenuHandle.setVisibility(View.VISIBLE);
+            setOverlayAlpha(1.0f);
+            Toast.makeText(this, R.string.move_overlays_on, Toast.LENGTH_LONG).show();
+        }
+        else {
+            setOverlayAlpha(prefConfig.desktopOverlayOpacity / 100f);
+            SharedPreferences.Editor editor = getSharedPreferences("desktop_overlay_layout", MODE_PRIVATE).edit();
+            for (View overlay : overlayOffsets.keySet()) {
+                String key = getResources().getResourceEntryName(overlay.getId());
+                float[] offset = overlayOffsets.get(overlay);
+                editor.putFloat(key + "_x", offset[0]).putFloat(key + "_y", offset[1]);
+            }
+            editor.apply();
+            Toast.makeText(this, R.string.move_overlays_off, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void recreateTouchContexts() {

@@ -54,18 +54,10 @@ public class RelativeTouchContext implements TouchContext {
                 return;
             }
 
-            if (prefConfig.enablePanZoom) {
-                // In desktop mode, pressing and holding in place means a right
-                // click, sent on release so the context menu appears where the
-                // finger lifts
-                confirmedHoldRightClick = true;
-                targetView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                return;
-            }
-
-            // We haven't been cancelled before the timer expired so begin dragging
-            confirmedDrag = true;
-            conn.sendMouseButtonDown(getMouseButtonIndex());
+            // Pressing and holding in place means a right click, sent on
+            // release so the context menu appears where the finger lifts
+            confirmedHoldRightClick = true;
+            targetView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         }
     };
 
@@ -110,9 +102,7 @@ public class RelativeTouchContext implements TouchContext {
 
     private static final int SCROLL_SPEED_FACTOR = 5;
 
-    // Cursor and scroll speed multipliers while the desktop zoom/pan
-    // preference is active
-    private static final float DESKTOP_CURSOR_SPEED_FACTOR = 0.4f;
+    // Scroll speed multiplier while the desktop zoom/pan preference is active
     private static final float DESKTOP_SCROLL_SPEED_FACTOR = 0.57f;
 
     private float cursorSpeedCarryX, cursorSpeedCarryY;
@@ -197,7 +187,7 @@ public class RelativeTouchContext implements TouchContext {
             cursorSpeedCarryX = cursorSpeedCarryY = 0;
 
             if (actionIndex == 0) {
-                if (prefConfig.enablePanZoom && pointerCount == 1 &&
+                if (pointerCount == 1 &&
                         eventTime - lastLeftTapTime < DOUBLE_TAP_DRAG_TIME_THRESHOLD) {
                     // Tap then press again quickly: hold the left button down so
                     // moving the cursor drags or selects. A quick release without
@@ -361,15 +351,23 @@ public class RelativeTouchContext implements TouchContext {
                         conn.sendMouseHighResScroll((short) scrollDelta);
                     }
                 } else {
-                    // Slow the cursor down for finer control in desktop mode,
-                    // carrying sub-pixel remainders so slow motion isn't lost
                     if (prefConfig.enablePanZoom) {
-                        float scaledX = deltaX * DESKTOP_CURSOR_SPEED_FACTOR + cursorSpeedCarryX;
-                        float scaledY = deltaY * DESKTOP_CURSOR_SPEED_FACTOR + cursorSpeedCarryY;
+                        // Absolute mouse mode deltas are relative to the view size,
+                        // so use view pixels rather than reference-resolution units.
+                        // Sub-pixel remainders are carried so slow motion isn't lost.
+                        float speed = prefConfig.trackpadCursorSpeed / 100f;
+                        float baseX = prefConfig.absoluteMouseMode ? eventX - lastTouchX : deltaX;
+                        float baseY = prefConfig.absoluteMouseMode ? eventY - lastTouchY : deltaY;
+                        float scaledX = baseX * speed + cursorSpeedCarryX;
+                        float scaledY = baseY * speed + cursorSpeedCarryY;
                         deltaX = (int) scaledX;
                         deltaY = (int) scaledY;
                         cursorSpeedCarryX = scaledX - deltaX;
                         cursorSpeedCarryY = scaledY - deltaY;
+                        if (prefConfig.absoluteMouseMode) {
+                            // The carry already holds the remainder
+                            rawDeltaX = rawDeltaY = 1;
+                        }
                     }
 
                     if (prefConfig.absoluteMouseMode) {

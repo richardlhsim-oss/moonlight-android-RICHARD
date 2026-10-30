@@ -35,6 +35,11 @@ public class StreamPanZoomHandler {
     private static final int GESTURE_UNDECIDED = 1;
     private static final int GESTURE_CLAIMED = 2;
     private static final int GESTURE_REJECTED = 3;
+    private static final int GESTURE_PANNING = 4;
+
+    // After a pinch, a single finger pans the view if it is down within this
+    // window (or is still down from the pinch)
+    private static final int PINCH_FOLLOW_UP_PAN_MS = 1000;
 
     private final View streamView;
     private final ScaleGestureDetector scaleDetector;
@@ -50,6 +55,9 @@ public class StreamPanZoomHandler {
     private float implicitPrevSpan, implicitPrevFocusX, implicitPrevFocusY;
     private long lastTwoFingerTapTime;
     private float lastTwoFingerTapFocusX, lastTwoFingerTapFocusY;
+    private long lastPinchEndTime;
+    private boolean panPrimed;
+    private float panPrevRawX, panPrevRawY;
 
     public StreamPanZoomHandler(Context context, View streamView) {
         this.streamView = streamView;
@@ -88,10 +96,19 @@ public class StreamPanZoomHandler {
     public int filterImplicitGesture(MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                if (scaleFactor > MIN_SCALE + 0.01f &&
+                        event.getEventTime() - lastPinchEndTime < PINCH_FOLLOW_UP_PAN_MS) {
+                    startFollowUpPan();
+                    return IMPLICIT_CONSUMED;
+                }
                 implicitGestureState = GESTURE_IDLE;
                 return IMPLICIT_PASS;
 
             case MotionEvent.ACTION_POINTER_DOWN:
+                if (implicitGestureState == GESTURE_PANNING) {
+                    // A second finger turns the pan back into a pinch
+                    implicitGestureState = GESTURE_CLAIMED;
+                }
                 if (implicitGestureState == GESTURE_CLAIMED) {
                     if (event.getPointerCount() == 2) {
                         primeImplicitPinch(event);
@@ -143,10 +160,20 @@ public class StreamPanZoomHandler {
                     }
                     return IMPLICIT_CONSUMED;
                 }
+                if (implicitGestureState == GESTURE_PANNING) {
+                    if (event.getPointerCount() == 1) {
+                        continueFollowUpPan(event);
+                    }
+                    return IMPLICIT_CONSUMED;
+                }
                 return IMPLICIT_PASS;
 
             case MotionEvent.ACTION_POINTER_UP:
-                if (implicitGestureState == GESTURE_CLAIMED) {
+                if (implicitGestureState == GESTURE_CLAIMED || implicitGestureState == GESTURE_PANNING) {
+                    if (event.getPointerCount() == 2) {
+                        // One pinch finger lifted: the remaining one pans
+                        startFollowUpPan();
+                    }
                     return IMPLICIT_CONSUMED;
                 }
                 if (implicitGestureState == GESTURE_UNDECIDED) {
@@ -172,9 +199,14 @@ public class StreamPanZoomHandler {
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                boolean wasClaimed = implicitGestureState == GESTURE_CLAIMED;
+                boolean wasClaimed = implicitGestureState == GESTURE_CLAIMED ||
+                        implicitGestureState == GESTURE_PANNING;
                 implicitGestureState = GESTURE_IDLE;
-                return wasClaimed ? IMPLICIT_CONSUMED : IMPLICIT_PASS;
+                if (wasClaimed) {
+                    lastPinchEndTime = event.getEventTime();
+                    return IMPLICIT_CONSUMED;
+                }
+                return IMPLICIT_PASS;
 
             default:
                 return IMPLICIT_PASS;
@@ -183,6 +215,28 @@ public class StreamPanZoomHandler {
 
     public void resetImplicitGesture() {
         implicitGestureState = GESTURE_IDLE;
+        lastPinchEndTime = 0;
+    }
+
+    private void startFollowUpPan() {
+        implicitGestureState = GESTURE_PANNING;
+        // Primed on the first single-finger move, since only then is the
+        // remaining finger guaranteed to be at index 0 for getRawX/Y
+        panPrimed = false;
+    }
+
+    private void continueFollowUpPan(MotionEvent event) {
+        // Raw screen coordinates are unaffected by the view being moved
+        float rawX = event.getRawX();
+        float rawY = event.getRawY();
+        if (panPrimed) {
+            streamView.setX(streamView.getX() + rawX - panPrevRawX);
+            streamView.setY(streamView.getY() + rawY - panPrevRawY);
+            constrainToBounds();
+        }
+        panPrevRawX = rawX;
+        panPrevRawY = rawY;
+        panPrimed = true;
     }
 
     // Toggles between fit-to-screen and a fixed zoom level anchored at the

@@ -30,6 +30,27 @@ The app installs alongside the official Moonlight app (package `com.limelight.un
 - Resolution and frame rate changes during a session.
 - Picture-in-picture when you switch apps.
 - Zoom level and position are saved for each host.
+- After a pinch, one finger pans the zoomed view (see [Touch gestures](#touch-gestures)).
+- Adjustable trackpad cursor speed, overlay opacity, and overlay positions.
+- Mouse buttons, scroll strip, and the handle's keyboard button can each be hidden.
+
+## Defaults
+
+A fresh install starts with these settings:
+
+| Setting | Default |
+| --- | --- |
+| Resolution | 1080p |
+| Bitrate | 10 Mbps |
+| Stretch video to fill screen | On |
+| Enable zoom and pan | On |
+| Show left/right mouse buttons | Off |
+| Show scroll bar | Off |
+| Show keyboard button on menu handle | On |
+| Overlay button opacity | 65% |
+| Trackpad cursor speed | 100% |
+
+Defaults only apply to settings that have never been saved. Clear the app's data to pick them up on an existing install.
 
 ## Controls
 
@@ -38,6 +59,7 @@ The app installs alongside the official Moonlight app (package `com.limelight.un
 | Gesture | Action |
 | --- | --- |
 | Pinch | Zoom in or out |
+| One finger after a pinch | Pan the zoomed view. Works if a pinch finger stays down, or if a finger goes down within 1 second of the pinch ending. Normal input resumes once no finger is down and 1 second has passed. |
 | Two-finger double-tap | Toggle between full view and 2.5x zoom at that point |
 | Two-finger drag | Scroll |
 | Two-finger tap | Right click |
@@ -47,7 +69,7 @@ The app installs alongside the official Moonlight app (package `com.limelight.un
 
 | Gesture | Action |
 | --- | --- |
-| Drag | Move the cursor. At the screen edge, the view follows the cursor. |
+| Drag | Move the cursor. At 100% speed the cursor moves as far as your finger (set in **Trackpad cursor speed**). At the screen edge, the view follows the cursor. |
 | Tap | Left click |
 | Press and hold until the phone vibrates, then release | Right click |
 | Tap, then press again and drag | Hold the left button to select text or drag |
@@ -63,9 +85,12 @@ The app installs alongside the official Moonlight app (package `com.limelight.un
 ### On-screen controls
 
 - **Handle (right edge):** the arrow opens the quick menu. The keyboard icon shows or hides the soft keyboard.
-- **Quick menu:** navigation mode (one-finger pan, with no input sent to the host), keyboard, touchscreen mode, resolution and frame rate, scroll direction, performance stats, privacy screen (see below), and disconnect.
+- **Quick menu:** navigation mode (one-finger pan, with no input sent to the host), keyboard, touchscreen mode, resolution and frame rate, scroll direction, performance stats, privacy screen (see below), move overlays, and disconnect.
 - **Mouse buttons (bottom):** press and hold to hold the button. Double-tap a button to lock it down, and tap again to release it.
 - **Scroll strip (right edge):** drag to scroll.
+- **Move overlays (quick menu, four-arrow icon):** drag the mouse buttons, scroll strip, or handle to a new position. Tap any of them without dragging to save. Positions persist and are kept on screen after rotation or when the keyboard opens.
+
+The mouse buttons and scroll strip are hidden by default. Turn them on, and set overlay opacity and trackpad cursor speed, in **Settings > Input Settings**.
 - **Modifier bar (above the keyboard):** Win, Shift, Ctrl, and Alt stay pressed until you tap them again. Tab uses the active modifiers, for example Alt+Tab. **Aa** turns on text input mode. The gear opens the quick menu. The last button switches between the soft keyboard and the function key pad.
 
 To end a session, use the power button in the quick menu or close the picture-in-picture window.

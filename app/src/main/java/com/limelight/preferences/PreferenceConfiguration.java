@@ -69,10 +69,15 @@ public class PreferenceConfiguration {
     private static final String GAMEPAD_MOTION_SENSORS_PREF_STRING = "checkbox_gamepad_motion_sensors";
     private static final String GAMEPAD_MOTION_FALLBACK_PREF_STRING = "checkbox_gamepad_motion_fallback";
     private static final String ENABLE_PAN_ZOOM_PREF_STRING = "checkbox_enable_pan_zoom";
+    private static final String SHOW_MOUSE_BUTTONS_PREF_STRING = "checkbox_show_mouse_buttons";
+    private static final String SHOW_SCROLL_STRIP_PREF_STRING = "checkbox_show_scroll_strip";
+    private static final String SHOW_HANDLE_KEYBOARD_PREF_STRING = "checkbox_show_handle_keyboard";
+    private static final String DESKTOP_OVERLAY_OPACITY_PREF_STRING = "seekbar_desktop_overlay_opacity";
+    private static final String TRACKPAD_CURSOR_SPEED_PREF_STRING = "seekbar_trackpad_cursor_speed";
 
-    static final String DEFAULT_RESOLUTION = "1280x720";
+    static final String DEFAULT_RESOLUTION = "1920x1080";
     static final String DEFAULT_FPS = "60";
-    private static final boolean DEFAULT_STRETCH = false;
+    private static final boolean DEFAULT_STRETCH = true;
     private static final boolean DEFAULT_SOPS = true;
     private static final boolean DEFAULT_DISABLE_TOASTS = false;
     private static final boolean DEFAULT_HOST_AUDIO = false;
@@ -109,7 +114,10 @@ public class PreferenceConfiguration {
     private static final boolean DEFAULT_GAMEPAD_TOUCHPAD_AS_MOUSE = false;
     private static final boolean DEFAULT_GAMEPAD_MOTION_SENSORS = true;
     private static final boolean DEFAULT_GAMEPAD_MOTION_FALLBACK = false;
-    private static final boolean DEFAULT_ENABLE_PAN_ZOOM = false;
+    private static final boolean DEFAULT_ENABLE_PAN_ZOOM = true;
+    private static final int DEFAULT_DESKTOP_OVERLAY_OPACITY = 65;
+    private static final int DEFAULT_BITRATE_KBPS = 10000;
+    private static final int DEFAULT_TRACKPAD_CURSOR_SPEED = 100;
 
     public static final int FRAME_PACING_MIN_LATENCY = 0;
     public static final int FRAME_PACING_BALANCED = 1;
@@ -158,6 +166,11 @@ public class PreferenceConfiguration {
     public boolean gamepadTouchpadAsMouse;
     public boolean gamepadMotionSensorsFallbackToDevice;
     public boolean enablePanZoom;
+    public boolean showMouseButtons;
+    public boolean showScrollStrip;
+    public boolean showHandleKeyboard;
+    public int desktopOverlayOpacity;
+    public int trackpadCursorSpeed;
 
     // Runtime-only state toggled from the in-stream quick menu
     public boolean invertScrollDirection;
@@ -346,10 +359,7 @@ public class PreferenceConfiguration {
     }
 
     public static int getDefaultBitrate(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return getDefaultBitrate(
-                prefs.getString(RESOLUTION_PREF_STRING, DEFAULT_RESOLUTION),
-                prefs.getString(FPS_PREF_STRING, DEFAULT_FPS));
+        return DEFAULT_BITRATE_KBPS;
     }
 
     private static FormatOption getVideoFormatValue(Context context) {
@@ -608,6 +618,11 @@ public class PreferenceConfiguration {
         config.gamepadMotionSensors = prefs.getBoolean(GAMEPAD_MOTION_SENSORS_PREF_STRING, DEFAULT_GAMEPAD_MOTION_SENSORS);
         config.gamepadMotionSensorsFallbackToDevice = prefs.getBoolean(GAMEPAD_MOTION_FALLBACK_PREF_STRING, DEFAULT_GAMEPAD_MOTION_FALLBACK);
         config.enablePanZoom = prefs.getBoolean(ENABLE_PAN_ZOOM_PREF_STRING, DEFAULT_ENABLE_PAN_ZOOM);
+        config.showMouseButtons = prefs.getBoolean(SHOW_MOUSE_BUTTONS_PREF_STRING, false);
+        config.showScrollStrip = prefs.getBoolean(SHOW_SCROLL_STRIP_PREF_STRING, false);
+        config.showHandleKeyboard = prefs.getBoolean(SHOW_HANDLE_KEYBOARD_PREF_STRING, true);
+        config.desktopOverlayOpacity = prefs.getInt(DESKTOP_OVERLAY_OPACITY_PREF_STRING, DEFAULT_DESKTOP_OVERLAY_OPACITY);
+        config.trackpadCursorSpeed = prefs.getInt(TRACKPAD_CURSOR_SPEED_PREF_STRING, DEFAULT_TRACKPAD_CURSOR_SPEED);
         config.invertScrollDirection = true;
 
         return config;

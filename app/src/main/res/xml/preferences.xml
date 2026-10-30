@@ -10,7 +10,7 @@
             android:summary="@string/summary_resolution_list"
             android:entries="@array/resolution_names"
             android:entryValues="@array/resolution_values"
-            android:defaultValue="1280x720" />
+            android:defaultValue="1920x1080" />
         <ListPreference
             android:key="list_fps"
             android:title="@string/title_fps_list"
@@ -39,7 +39,7 @@
         <CheckBoxPreference
             android:key="checkbox_stretch_video"
             android:title="@string/title_checkbox_stretch_video"
-            android:defaultValue="false" />
+            android:defaultValue="true" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_audio_settings">
         <ListPreference
@@ -148,7 +148,47 @@
             android:key="checkbox_enable_pan_zoom"
             android:title="@string/title_checkbox_enable_pan_zoom"
             android:summary="@string/summary_checkbox_enable_pan_zoom"
+            android:defaultValue="true" />
+        <CheckBoxPreference
+            android:key="checkbox_show_mouse_buttons"
+            android:dependency="checkbox_enable_pan_zoom"
+            android:title="@string/title_checkbox_show_mouse_buttons"
+            android:summary="@string/summary_checkbox_show_mouse_buttons"
             android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_show_scroll_strip"
+            android:dependency="checkbox_enable_pan_zoom"
+            android:title="@string/title_checkbox_show_scroll_strip"
+            android:summary="@string/summary_checkbox_show_scroll_strip"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_show_handle_keyboard"
+            android:dependency="checkbox_enable_pan_zoom"
+            android:title="@string/title_checkbox_show_handle_keyboard"
+            android:summary="@string/summary_checkbox_show_handle_keyboard"
+            android:defaultValue="true" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_desktop_overlay_opacity"
+            android:dependency="checkbox_enable_pan_zoom"
+            android:dialogMessage="@string/summary_desktop_overlay_opacity"
+            seekbar:min="10"
+            seekbar:step="5"
+            android:max="100"
+            android:defaultValue="65"
+            android:summary="@string/summary_desktop_overlay_opacity"
+            android:text="@string/suffix_osc_opacity"
+            android:title="@string/title_desktop_overlay_opacity" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_trackpad_cursor_speed"
+            android:dependency="checkbox_enable_pan_zoom"
+            android:dialogMessage="@string/summary_trackpad_cursor_speed"
+            seekbar:min="25"
+            seekbar:step="5"
+            android:max="400"
+            android:defaultValue="100"
+            android:summary="@string/summary_trackpad_cursor_speed"
+            android:text="@string/suffix_osc_opacity"
+            android:title="@string/title_trackpad_cursor_speed" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_on_screen_controls_settings"
         android:key="category_onscreen_controls">
