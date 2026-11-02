@@ -33,6 +33,7 @@ import com.limelight.ui.GameGestures;
 import com.limelight.ui.StreamPanZoomHandler;
 import com.limelight.ui.StreamView;
 import com.limelight.utils.Dialog;
+import com.limelight.utils.ClipboardSync;
 import com.limelight.utils.ServerHelper;
 import com.limelight.utils.ShortcutHelper;
 import com.limelight.utils.SpinnerDialog;
@@ -178,6 +179,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private View mouseButtonBar;
     private View scrollStrip;
     private float lastScrollStripY;
+    private ClipboardSync clipboardSync;
     private final HashMap<View, float[]> overlayOffsets = new HashMap<>();
     private boolean overlayEditMode = false;
     private boolean overlayDragMoved;
@@ -440,6 +442,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                         ((ImageButton) v).clearColorFilter();
                     }
                     Toast.makeText(Game.this, R.string.privacy_screen_sent, Toast.LENGTH_SHORT).show();
+                }
+            });
+            findViewById(R.id.quickMenuCursorSpeedButton).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showCursorSpeedMenu(v);
                 }
             });
             findViewById(R.id.quickMenuMoveOverlaysButton).setOnClickListener(new View.OnClickListener() {
@@ -1009,6 +1017,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         // With Android native pointer capture, capture is lost when focus is lost,
         // so it must be requested again when focus is regained.
         inputCaptureProvider.onWindowFocusChanged(hasFocus);
+
+        // Clipboard changes made in other apps can only be read once focused again
+        if (hasFocus && clipboardSync != null) {
+            clipboardSync.sendLocalClipboard();
+        }
     }
 
     private boolean isRefreshRateEqualMatch(float refreshRate) {
@@ -1828,6 +1841,27 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 }
             }
         };
+    }
+
+    private void showCursorSpeedMenu(View anchor) {
+        final int[] speeds = { 100, 150, 200, 300, 400, 600, 800 };
+        PopupMenu menu = new PopupMenu(this, anchor);
+        for (int i = 0; i < speeds.length; i++) {
+            MenuItem item = menu.getMenu().add(0, i, i, speeds[i] + "%");
+            item.setCheckable(true).setChecked(speeds[i] == prefConfig.trackpadCursorSpeed);
+        }
+        menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                prefConfig.trackpadCursorSpeed = speeds[item.getItemId()];
+                PreferenceManager.getDefaultSharedPreferences(Game.this).edit()
+                        .putInt("seekbar_trackpad_cursor_speed", prefConfig.trackpadCursorSpeed).apply();
+                Toast.makeText(Game.this, getString(R.string.cursor_speed_set, prefConfig.trackpadCursorSpeed),
+                        Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+        menu.show();
     }
 
     private void showDesktopOverlays() {
@@ -3164,6 +3198,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     }
 
     private void stopConnection() {
+        if (clipboardSync != null) {
+            clipboardSync.stop();
+            clipboardSync = null;
+        }
+
         if (connecting || connected) {
             connecting = connected = false;
             updatePipAutoEnter();
@@ -3352,6 +3391,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 connected = true;
                 connecting = false;
                 updatePipAutoEnter();
+
+                if (prefConfig.enablePanZoom && prefConfig.clipboardSync && clipboardSync == null) {
+                    clipboardSync = new ClipboardSync(Game.this, getIntent().getStringExtra(EXTRA_HOST));
+                    clipboardSync.start();
+                }
 
                 // Hide the mouse cursor now after a short delay.
                 // Doing it before dismissing the spinner seems to be undone

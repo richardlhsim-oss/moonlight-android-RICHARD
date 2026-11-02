@@ -73,7 +73,9 @@ public class PreferenceConfiguration {
     private static final String SHOW_SCROLL_STRIP_PREF_STRING = "checkbox_show_scroll_strip";
     private static final String SHOW_HANDLE_KEYBOARD_PREF_STRING = "checkbox_show_handle_keyboard";
     private static final String DESKTOP_OVERLAY_OPACITY_PREF_STRING = "seekbar_desktop_overlay_opacity";
-    private static final String TRACKPAD_CURSOR_SPEED_PREF_STRING = "seekbar_trackpad_cursor_speed";
+    static final String TRACKPAD_CURSOR_SPEED_PREF_STRING = "seekbar_trackpad_cursor_speed";
+    private static final String TRACKPAD_ACCELERATION_PREF_STRING = "checkbox_trackpad_acceleration";
+    private static final String CLIPBOARD_SYNC_PREF_STRING = "checkbox_clipboard_sync";
 
     static final String DEFAULT_RESOLUTION = "1920x1080";
     static final String DEFAULT_FPS = "60";
@@ -117,7 +119,7 @@ public class PreferenceConfiguration {
     private static final boolean DEFAULT_ENABLE_PAN_ZOOM = true;
     private static final int DEFAULT_DESKTOP_OVERLAY_OPACITY = 65;
     private static final int DEFAULT_BITRATE_KBPS = 10000;
-    private static final int DEFAULT_TRACKPAD_CURSOR_SPEED = 100;
+    private static final int DEFAULT_TRACKPAD_CURSOR_SPEED = 200;
 
     public static final int FRAME_PACING_MIN_LATENCY = 0;
     public static final int FRAME_PACING_BALANCED = 1;
@@ -171,6 +173,8 @@ public class PreferenceConfiguration {
     public boolean showHandleKeyboard;
     public int desktopOverlayOpacity;
     public int trackpadCursorSpeed;
+    public boolean trackpadAcceleration;
+    public boolean clipboardSync;
 
     // Runtime-only state toggled from the in-stream quick menu
     public boolean invertScrollDirection;
@@ -623,6 +627,8 @@ public class PreferenceConfiguration {
         config.showHandleKeyboard = prefs.getBoolean(SHOW_HANDLE_KEYBOARD_PREF_STRING, true);
         config.desktopOverlayOpacity = prefs.getInt(DESKTOP_OVERLAY_OPACITY_PREF_STRING, DEFAULT_DESKTOP_OVERLAY_OPACITY);
         config.trackpadCursorSpeed = prefs.getInt(TRACKPAD_CURSOR_SPEED_PREF_STRING, DEFAULT_TRACKPAD_CURSOR_SPEED);
+        config.trackpadAcceleration = prefs.getBoolean(TRACKPAD_ACCELERATION_PREF_STRING, true);
+        config.clipboardSync = prefs.getBoolean(CLIPBOARD_SYNC_PREF_STRING, true);
         config.invertScrollDirection = true;
 
         return config;

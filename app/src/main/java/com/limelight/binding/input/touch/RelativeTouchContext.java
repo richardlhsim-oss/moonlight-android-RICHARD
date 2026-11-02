@@ -105,6 +105,11 @@ public class RelativeTouchContext implements TouchContext {
     // Scroll speed multiplier while the desktop zoom/pan preference is active
     private static final float DESKTOP_SCROLL_SPEED_FACTOR = 0.57f;
 
+    // Acceleration gain grows with finger speed (dp per ms) up to this limit
+    private static final float ACCELERATION_MAX_GAIN = 3.0f;
+
+    private long lastMoveTime;
+
     private float cursorSpeedCarryX, cursorSpeedCarryY;
     private Runnable pendingClickRunnable;
     private boolean confirmedHoldRightClick;
@@ -185,6 +190,7 @@ public class RelativeTouchContext implements TouchContext {
             confirmedHoldRightClick = false;
             distanceMoved = 0;
             cursorSpeedCarryX = cursorSpeedCarryY = 0;
+            lastMoveTime = eventTime;
 
             if (actionIndex == 0) {
                 if (pointerCount == 1 &&
@@ -358,6 +364,12 @@ public class RelativeTouchContext implements TouchContext {
                         float speed = prefConfig.trackpadCursorSpeed / 100f;
                         float baseX = prefConfig.absoluteMouseMode ? eventX - lastTouchX : deltaX;
                         float baseY = prefConfig.absoluteMouseMode ? eventY - lastTouchY : deltaY;
+                        if (prefConfig.trackpadAcceleration) {
+                            float density = targetView.getResources().getDisplayMetrics().density;
+                            float dpPerMs = (float) Math.hypot(eventX - lastTouchX, eventY - lastTouchY) /
+                                    density / Math.max(eventTime - lastMoveTime, 1);
+                            speed *= Math.min(1 + dpPerMs, ACCELERATION_MAX_GAIN);
+                        }
                         float scaledX = baseX * speed + cursorSpeedCarryX;
                         float scaledY = baseY * speed + cursorSpeedCarryY;
                         deltaX = (int) scaledX;
@@ -397,6 +409,7 @@ public class RelativeTouchContext implements TouchContext {
                 // If the scaling factor ended up rounding deltas to zero, wait until they are
                 // non-zero to update lastTouch that way devices that report small touch events often
                 // will work correctly
+                lastMoveTime = eventTime;
                 if (rawDeltaX != 0) {
                     lastTouchX = eventX;
                 }

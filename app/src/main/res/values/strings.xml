@@ -213,7 +213,13 @@
     <string name="title_desktop_overlay_opacity">Overlay button opacity</string>
     <string name="summary_desktop_overlay_opacity">Opacity of the mouse buttons, scroll bar and quick menu handle</string>
     <string name="title_trackpad_cursor_speed">Trackpad cursor speed</string>
-    <string name="summary_trackpad_cursor_speed">Cursor speed when the touchscreen is used as a trackpad. 100% moves the cursor as far as the finger moves.</string>
+    <string name="summary_trackpad_cursor_speed">Cursor speed when the touchscreen is used as a trackpad. 100% moves the cursor as far as the finger moves. Also adjustable from the quick menu.</string>
+    <string name="title_checkbox_trackpad_acceleration">Trackpad acceleration</string>
+    <string name="summary_checkbox_trackpad_acceleration">Fast swipes move the cursor further, slow movements stay precise</string>
+    <string name="title_checkbox_clipboard_sync">Sync clipboard with PC</string>
+    <string name="summary_checkbox_clipboard_sync">Two-way text clipboard sync. Requires the ClipboardSync helper running on the PC.</string>
+    <string name="quick_menu_cursor_speed_description">Cursor speed</string>
+    <string name="cursor_speed_set">Cursor speed: %1$d%%</string>
     <string name="quick_menu_move_overlays_description">Move overlay buttons</string>
     <string name="move_overlays_on">Drag the overlay buttons to move them. Tap one without dragging to finish.</string>
     <string name="move_overlays_off">Overlay positions saved</string>

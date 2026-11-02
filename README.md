@@ -31,7 +31,8 @@ The app installs alongside the official Moonlight app (package `com.limelight.un
 - Picture-in-picture when you switch apps.
 - Zoom level and position are saved for each host.
 - After a pinch, one finger pans the zoomed view (see [Touch gestures](#touch-gestures)).
-- Adjustable trackpad cursor speed, overlay opacity, and overlay positions.
+- Adjustable trackpad cursor speed (also from the quick menu) with optional acceleration, overlay opacity, and overlay positions.
+- Two-way text clipboard sync with a Windows host (see [Clipboard sync](#clipboard-sync)).
 - Mouse buttons, scroll strip, and the handle's keyboard button can each be hidden.
 
 ## Defaults
@@ -48,7 +49,9 @@ A fresh install starts with these settings:
 | Show scroll bar | Off |
 | Show keyboard button on menu handle | On |
 | Overlay button opacity | 65% |
-| Trackpad cursor speed | 100% |
+| Trackpad cursor speed | 200% |
+| Trackpad acceleration | On |
+| Sync clipboard with PC | On |
 
 Defaults only apply to settings that have never been saved. Clear the app's data to pick them up on an existing install.
 
@@ -69,7 +72,7 @@ Defaults only apply to settings that have never been saved. Clear the app's data
 
 | Gesture | Action |
 | --- | --- |
-| Drag | Move the cursor. At 100% speed the cursor moves as far as your finger (set in **Trackpad cursor speed**). At the screen edge, the view follows the cursor. |
+| Drag | Move the cursor. At 100% speed the cursor moves as far as your finger; the default is 200%, and acceleration makes fast swipes go further. Change it in **Trackpad cursor speed** or with the speedometer button in the quick menu. At the screen edge, the view follows the cursor. |
 | Tap | Left click |
 | Press and hold until the phone vibrates, then release | Right click |
 | Tap, then press again and drag | Hold the left button to select text or drag |
@@ -85,7 +88,7 @@ Defaults only apply to settings that have never been saved. Clear the app's data
 ### On-screen controls
 
 - **Handle (right edge):** the arrow opens the quick menu. The keyboard icon shows or hides the soft keyboard.
-- **Quick menu:** navigation mode (one-finger pan, with no input sent to the host), keyboard, touchscreen mode, resolution and frame rate, scroll direction, performance stats, privacy screen (see below), move overlays, and disconnect.
+- **Quick menu:** navigation mode (one-finger pan, with no input sent to the host), keyboard, touchscreen mode, resolution and frame rate, scroll direction, performance stats, privacy screen (see below), cursor speed, move overlays, and disconnect.
 - **Mouse buttons (bottom):** press and hold to hold the button. Double-tap a button to lock it down, and tap again to release it.
 - **Scroll strip (right edge):** drag to scroll.
 - **Move overlays (quick menu, four-arrow icon):** drag the mouse buttons, scroll strip, or handle to a new position. Tap any of them without dragging to save. Positions persist and are kept on screen after rotation or when the keyboard opens.
@@ -98,6 +101,10 @@ To end a session, use the power button in the quick menu or close the picture-in
 ## Privacy screen
 
 The eye button in the quick menu blanks the host computer's physical monitors while you stream, so nobody near the host can see your session. The stream itself is unaffected. This needs a small helper running on each Windows host, which is in [tools/privacy-screen](tools/privacy-screen) (build, run once, and it stays in the tray). The button sends the helper's hotkey, Ctrl+Alt+Shift+P. A green dot at the top right of the primary monitor, visible in the stream, shows that it is on. Linux hosts running X11 are supported through a separate helper in [tools/privacy-screen-linux](tools/privacy-screen-linux); Wayland is not supported.
+
+## Clipboard sync
+
+Text copied on the PC can be pasted on the phone, and the other way round. This needs a small helper running on each Windows host, which is in [tools/clipboard-sync](tools/clipboard-sync) (build, allow TCP port 48250 through the firewall, run once, and it stays in the tray). The app connects to it when a stream starts. Text copied in another phone app is sent when you switch back to the stream, because Android only lets the app in front read the clipboard. Turn it off with **Sync clipboard with PC** in **Settings > Input Settings**. Traffic is not encrypted, so use it on networks you trust or over a VPN such as Tailscale.
 
 ## Building
 

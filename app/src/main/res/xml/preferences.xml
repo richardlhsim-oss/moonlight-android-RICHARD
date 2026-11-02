@@ -183,12 +183,24 @@
             android:dependency="checkbox_enable_pan_zoom"
             android:dialogMessage="@string/summary_trackpad_cursor_speed"
             seekbar:min="25"
-            seekbar:step="5"
-            android:max="400"
-            android:defaultValue="100"
+            seekbar:step="25"
+            android:max="800"
+            android:defaultValue="200"
             android:summary="@string/summary_trackpad_cursor_speed"
             android:text="@string/suffix_osc_opacity"
             android:title="@string/title_trackpad_cursor_speed" />
+        <CheckBoxPreference
+            android:key="checkbox_trackpad_acceleration"
+            android:dependency="checkbox_enable_pan_zoom"
+            android:title="@string/title_checkbox_trackpad_acceleration"
+            android:summary="@string/summary_checkbox_trackpad_acceleration"
+            android:defaultValue="true" />
+        <CheckBoxPreference
+            android:key="checkbox_clipboard_sync"
+            android:dependency="checkbox_enable_pan_zoom"
+            android:title="@string/title_checkbox_clipboard_sync"
+            android:summary="@string/summary_checkbox_clipboard_sync"
+            android:defaultValue="true" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_on_screen_controls_settings"
         android:key="category_onscreen_controls">
