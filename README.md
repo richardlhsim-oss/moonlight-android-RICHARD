@@ -88,7 +88,7 @@ Defaults only apply to settings that have never been saved. Clear the app's data
 ### On-screen controls
 
 - **Handle (right edge):** the arrow opens the quick menu. The keyboard icon shows or hides the soft keyboard.
-- **Quick menu:** navigation mode (one-finger pan, with no input sent to the host), keyboard, touchscreen mode, resolution and frame rate, scroll direction, performance stats, privacy screen (see below), cursor speed, move overlays, and disconnect.
+- **Quick menu:** swipe sideways if it is wider than the screen. It holds navigation mode (one-finger pan, with no input sent to the host), keyboard, touchscreen mode, resolution and frame rate, scroll direction, performance stats, privacy screen (see below), cursor speed, move overlays, and disconnect.
 - **Mouse buttons (bottom):** press and hold to hold the button. Double-tap a button to lock it down, and tap again to release it.
 - **Scroll strip (right edge):** drag to scroll.
 - **Move overlays (quick menu, four-arrow icon):** drag the mouse buttons, scroll strip, or handle to a new position. Tap any of them without dragging to save. Positions persist and are kept on screen after rotation or when the keyboard opens.

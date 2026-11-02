@@ -108,6 +108,10 @@ public class RelativeTouchContext implements TouchContext {
     // Acceleration gain grows with finger speed (dp per ms) up to this limit
     private static final float ACCELERATION_MAX_GAIN = 3.0f;
 
+    // Applied on top of the speed setting, since 1:1 finger tracking is too
+    // slow on a phone-sized screen
+    private static final float BASE_CURSOR_GAIN = 2.0f;
+
     private long lastMoveTime;
 
     private float cursorSpeedCarryX, cursorSpeedCarryY;
@@ -361,7 +365,7 @@ public class RelativeTouchContext implements TouchContext {
                         // Absolute mouse mode deltas are relative to the view size,
                         // so use view pixels rather than reference-resolution units.
                         // Sub-pixel remainders are carried so slow motion isn't lost.
-                        float speed = prefConfig.trackpadCursorSpeed / 100f;
+                        float speed = prefConfig.trackpadCursorSpeed / 100f * BASE_CURSOR_GAIN;
                         float baseX = prefConfig.absoluteMouseMode ? eventX - lastTouchX : deltaX;
                         float baseY = prefConfig.absoluteMouseMode ? eventY - lastTouchY : deltaY;
                         if (prefConfig.trackpadAcceleration) {

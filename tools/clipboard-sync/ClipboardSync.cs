@@ -31,6 +31,8 @@ class Controller : Form
     const int PORT = 48250;
     const int WM_CLIPBOARDUPDATE = 0x031D;
     const int MAX_TEXT_LENGTH = 1024 * 1024;
+    const int MAX_READ_ATTEMPTS = 10;
+    const int READ_RETRY_MS = 100;
 
     [DllImport("user32.dll")] static extern bool AddClipboardFormatListener(IntPtr hwnd);
     [DllImport("user32.dll")] static extern bool RemoveClipboardFormatListener(IntPtr hwnd);
@@ -79,7 +81,9 @@ class Controller : Form
         base.WndProc(ref m);
     }
 
-    void SendLocalClipboard()
+    void SendLocalClipboard() { SendLocalClipboard(0); }
+
+    void SendLocalClipboard(int attempt)
     {
         string text;
         try
@@ -87,24 +91,37 @@ class Controller : Form
             if (!Clipboard.ContainsText()) return;
             text = Clipboard.GetText();
         }
-        catch (ExternalException) { return; } // clipboard busy in another app
+        catch (ExternalException)
+        {
+            // The copying app often still holds the clipboard when the update
+            // notification arrives, so retry shortly instead of dropping it
+            if (attempt < MAX_READ_ATTEMPTS)
+            {
+                var retry = new System.Windows.Forms.Timer { Interval = READ_RETRY_MS };
+                retry.Tick += (s, e) => { retry.Dispose(); SendLocalClipboard(attempt + 1); };
+                retry.Start();
+            }
+            else Log.Write("clipboard busy, not sent");
+            return;
+        }
 
         if (string.IsNullOrEmpty(text) || text.Length > MAX_TEXT_LENGTH || text == lastSyncedText) return;
         lastSyncedText = text;
-        Send(text);
+        Log.Write(Send(text) ? "sent " + text.Length + " chars to phone" : "copied, but no phone connected");
     }
 
-    void Send(string text)
+    bool Send(string text)
     {
         lock (clientLock)
         {
-            if (writer == null) return;
+            if (writer == null) return false;
             try
             {
                 writer.Write(Convert.ToBase64String(Encoding.UTF8.GetBytes(text)) + "\n");
                 writer.Flush();
+                return true;
             }
-            catch (Exception ex) { Log.Write("send failed: " + ex.Message); }
+            catch (Exception ex) { Log.Write("send failed: " + ex.Message); return false; }
         }
     }
 
@@ -176,6 +193,7 @@ class Controller : Form
                 try { text = Encoding.UTF8.GetString(Convert.FromBase64String(line)); }
                 catch (FormatException) { continue; }
                 if (text.Length == 0 || text.Length > MAX_TEXT_LENGTH) continue;
+                Log.Write("received " + text.Length + " chars from phone");
                 BeginInvoke((Action)(() => ApplyRemoteClipboard(text)));
             }
         }
