@@ -189,6 +189,17 @@
             android:summary="@string/summary_trackpad_cursor_speed"
             android:text="@string/suffix_osc_opacity"
             android:title="@string/title_trackpad_cursor_speed" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_physical_mouse_speed"
+            android:dependency="checkbox_enable_pan_zoom"
+            android:dialogMessage="@string/summary_physical_mouse_speed"
+            seekbar:min="25"
+            seekbar:step="25"
+            android:max="400"
+            android:defaultValue="100"
+            android:summary="@string/summary_physical_mouse_speed"
+            android:text="@string/suffix_osc_opacity"
+            android:title="@string/title_physical_mouse_speed" />
         <CheckBoxPreference
             android:key="checkbox_trackpad_acceleration"
             android:dependency="checkbox_enable_pan_zoom"

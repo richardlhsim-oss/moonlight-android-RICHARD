@@ -51,6 +51,7 @@ A fresh install starts with these settings:
 | Overlay button opacity | 65% |
 | Trackpad cursor speed | 200% |
 | Trackpad acceleration | On |
+| Physical mouse speed | 100% |
 | Sync clipboard with PC | On |
 
 Defaults only apply to settings that have never been saved. Clear the app's data to pick them up on an existing install.
@@ -101,6 +102,10 @@ To end a session, use the power button in the quick menu or close the picture-in
 ## Privacy screen
 
 The eye button in the quick menu blanks the host computer's physical monitors while you stream, so nobody near the host can see your session. The stream itself is unaffected. This needs a small helper running on each Windows host, which is in [tools/privacy-screen](tools/privacy-screen) (build, run once, and it stays in the tray). The button sends the helper's hotkey, Ctrl+Alt+Shift+P. A green dot at the top right of the primary monitor, visible in the stream, shows that it is on. Linux hosts running X11 are supported through a separate helper in [tools/privacy-screen-linux](tools/privacy-screen-linux); Wayland is not supported.
+
+## Physical mouse
+
+A connected mouse or touchpad sends normal mouse movement, so the PC's own pointer speed and acceleration apply. Scale it with **Physical mouse speed** in **Settings > Input Settings** (100% matches the PC). The view does not follow a physical mouse while zoomed.
 
 ## Clipboard sync
 

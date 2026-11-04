@@ -180,6 +180,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private View scrollStrip;
     private float lastScrollStripY;
     private ClipboardSync clipboardSync;
+    private float mouseSpeedCarryX, mouseSpeedCarryY;
     private final HashMap<View, float[]> overlayOffsets = new HashMap<>();
     private boolean overlayEditMode = false;
     private boolean overlayDragMoved;
@@ -2790,8 +2791,24 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     short deltaX = (short)inputCaptureProvider.getRelativeAxisX(event);
                     short deltaY = (short)inputCaptureProvider.getRelativeAxisY(event);
 
+                    if (prefConfig.enablePanZoom) {
+                        // The cursor speed setting also applies to physical mice
+                        // and touchpads (100% is the host's normal speed),
+                        // carrying sub-pixel remainders
+                        float speed = prefConfig.physicalMouseSpeed / 100f;
+                        float scaledX = deltaX * speed + mouseSpeedCarryX;
+                        float scaledY = deltaY * speed + mouseSpeedCarryY;
+                        deltaX = (short) scaledX;
+                        deltaY = (short) scaledY;
+                        mouseSpeedCarryX = scaledX - deltaX;
+                        mouseSpeedCarryY = scaledY - deltaY;
+                    }
+
                     if (deltaX != 0 || deltaY != 0) {
-                        if (prefConfig.absoluteMouseMode) {
+                        // Desktop mode forces absolute mode for touch input, but
+                        // physical mice send true relative motion so the host's own
+                        // pointer speed and acceleration apply
+                        if (prefConfig.absoluteMouseMode && !prefConfig.enablePanZoom) {
                             // NB: view may be null, but we can unconditionally use streamView because we don't need to adjust
                             // relative axis deltas for the position of the streamView within the parent's coordinate system.
                             conn.sendMouseMoveAsMousePosition(deltaX, deltaY, (short)streamView.getWidth(), (short)streamView.getHeight());

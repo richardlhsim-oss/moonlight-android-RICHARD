@@ -174,6 +174,7 @@ public class PreferenceConfiguration {
     public int desktopOverlayOpacity;
     public int trackpadCursorSpeed;
     public boolean trackpadAcceleration;
+    public int physicalMouseSpeed;
     public boolean clipboardSync;
 
     // Runtime-only state toggled from the in-stream quick menu
@@ -628,6 +629,7 @@ public class PreferenceConfiguration {
         config.desktopOverlayOpacity = prefs.getInt(DESKTOP_OVERLAY_OPACITY_PREF_STRING, DEFAULT_DESKTOP_OVERLAY_OPACITY);
         config.trackpadCursorSpeed = prefs.getInt(TRACKPAD_CURSOR_SPEED_PREF_STRING, DEFAULT_TRACKPAD_CURSOR_SPEED);
         config.trackpadAcceleration = prefs.getBoolean(TRACKPAD_ACCELERATION_PREF_STRING, true);
+        config.physicalMouseSpeed = prefs.getInt("seekbar_physical_mouse_speed", 100);
         config.clipboardSync = prefs.getBoolean(CLIPBOARD_SYNC_PREF_STRING, true);
         config.invertScrollDirection = true;
 
