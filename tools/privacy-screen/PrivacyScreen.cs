@@ -8,6 +8,7 @@
 //
 // Control:
 //   Ctrl+Alt+Shift+P            toggle (global hotkey; send it from the Moonlight modifier bar)
+//   Ctrl+Alt+Shift+F9 / F10     on / off (used by clients to set the state at connect and disconnect)
 //   PrivacyScreen.exe --on|--off|--toggle   control a running instance
 //   tray icon                   toggle / exit
 //
@@ -93,6 +94,8 @@ class Overlay : Form
 class Controller : Form
 {
     const int HOTKEY_ID = 1;
+    const int HOTKEY_ON_ID = 2;
+    const int HOTKEY_OFF_ID = 3;
     readonly System.Collections.Generic.List<Overlay> overlays = new System.Collections.Generic.List<Overlay>();
     readonly NotifyIcon tray = new NotifyIcon();
     readonly System.Windows.Forms.Timer keepOnTop = new System.Windows.Forms.Timer();
@@ -130,6 +133,13 @@ class Controller : Form
         base.OnHandleCreated(e);
         // Ctrl+Alt+Shift+P first; the fallbacks cover another app owning it
         Keys[] candidates = { Keys.P, Keys.F12, Keys.F11 };
+        uint mods = Native.MOD_CONTROL | Native.MOD_ALT | Native.MOD_SHIFT | Native.MOD_NOREPEAT;
+        if (!Native.RegisterHotKey(Handle, HOTKEY_ON_ID, mods, (uint)Keys.F9) ||
+                !Native.RegisterHotKey(Handle, HOTKEY_OFF_ID, mods, (uint)Keys.F10))
+        {
+            Log.Write("on/off hotkeys unavailable (error " + Marshal.GetLastWin32Error() + ")");
+        }
+
         foreach (var k in candidates)
         {
             if (Native.RegisterHotKey(Handle, HOTKEY_ID,
@@ -147,13 +157,21 @@ class Controller : Form
 
     protected override void WndProc(ref Message m)
     {
-        if (m.Msg == Native.WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID) Toggle();
+        if (m.Msg == Native.WM_HOTKEY)
+        {
+            int id = m.WParam.ToInt32();
+            if (id == HOTKEY_ID) Toggle();
+            else if (id == HOTKEY_ON_ID) SetActive(true);
+            else if (id == HOTKEY_OFF_ID) SetActive(false);
+        }
         base.WndProc(ref m);
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         Native.UnregisterHotKey(Handle, HOTKEY_ID);
+        Native.UnregisterHotKey(Handle, HOTKEY_ON_ID);
+        Native.UnregisterHotKey(Handle, HOTKEY_OFF_ID);
         SetActive(false);
         tray.Visible = false;
         base.OnFormClosing(e);

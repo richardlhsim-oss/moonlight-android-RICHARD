@@ -15,6 +15,9 @@ stream).
 3. Toggle with `Ctrl+Alt+Shift+P`, from the tray menu, or from the shield
    button in the Moonlight quick menu (desktop mode), which sends the same hotkey.
 
+`Ctrl+Alt+Shift+F9` always switches it on and `Ctrl+Alt+Shift+F10` always
+switches it off; the Optimus client sends these when a session starts and ends.
+
 Command line for a running instance: `PrivacyScreen.exe --on`, `--off`,
 `--toggle`. `--on --for 30` switches on and turns off again after 30 seconds.
 
